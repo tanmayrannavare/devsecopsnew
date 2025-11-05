@@ -12,6 +12,12 @@ pipeline {
         DOCKER_TAG = "${BUILD_NUMBER}"
         SONARQUBE_SERVER = "SonarQube"
     }
+
+    tools {
+        // SonarQube Scanner tool configured in Global Tool Configuration
+        // This makes 'sonar-scanner' available in the PATH
+        tool 'SonarScanner', type: 'sonar-scanner'
+    }
     
     stages {
         
@@ -63,9 +69,9 @@ pipeline {
                     fi
                     
                     echo "Scanning for hardcoded secrets..."
-                    grep -r "password|api_key|secret|token" .
-                        --include="*.js" 
-                        --include="*.html" 
+                    grep -r "password|api_key|secret|token" . \
+                        --include="*.js" \
+                        --include="*.html" \
                         --include="*.css" || echo "✓ No obvious secrets found"
                 '''
             }
