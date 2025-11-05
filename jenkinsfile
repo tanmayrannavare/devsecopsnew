@@ -1,8 +1,7 @@
-// FINAL OPTIMIZED JENKINSFILE FOR YOUR PROJECT
+// FINAL, CORRECTED, AND OPTIMIZED JENKINSFILE
 // Project: Embedding Security in Every Stage of the CI/CD Lifecycle
 // Type: HTML/CSS/JavaScript Web Application
 // Repository: github.com/tanmayrannavare/devsecops (PUBLIC)
-// This version removes unnecessary stages (Maven, JUnit, etc.) and fixes tool syntax
 
 pipeline {
     agent any
@@ -10,14 +9,11 @@ pipeline {
     environment {
         DOCKER_IMAGE = "tanmayrannavare/devsecops"
         DOCKER_TAG = "${BUILD_NUMBER}"
-        SONARQUBE_SERVER = "SonarQube"
+        SONARQUBE_SERVER = "SonarQube" // Must match the name in Jenkins Global Config
     }
-
-    tools {
-        // SonarQube Scanner tool configured in Global Tool Configuration
-        // This makes 'sonar-scanner' available in the PATH
-        sonar 'SonarScanner'
-    }
+    
+    // No top-level 'tools' block needed for this setup.
+    // The SonarQube Scanner tool is called directly within the stage.
     
     stages {
         
@@ -26,7 +22,7 @@ pipeline {
                 echo '========== Cloning Git Repository =========='
                 // PUBLIC REPO - NO credentials needed
                 git branch: 'main',
-                    url: 'https://github.com/tanmayrannavare/devsecops.git'
+                    url: 'https://github.com/tanmayrannavare/devsecopsnew.git'
             }
         }
         
@@ -34,16 +30,19 @@ pipeline {
             steps {
                 echo '========== Running SonarQube Code Analysis =========='
                 script {
-                    // Static analysis of HTML/CSS/JavaScript
+                    // Define the SonarScanner tool and get its path
+                    def scannerHome = tool 'SonarScanner' // Must match the name in Global Tool Config
+                    
+                    // Now run the scanner using the correct path
                     withSonarQubeEnv("${SONARQUBE_SERVER}") {
-                        sh '''
-                            sonar-scanner \
+                        sh """
+                            ${scannerHome}/bin/sonar-scanner \
                             -Dsonar.projectKey=devsecops-web \
                             -Dsonar.projectName="DevSecOps Web App" \
                             -Dsonar.sources=. \
                             -Dsonar.exclusions=node_modules/**,build/**,dist/** \
                             -Dsonar.sourceEncoding=UTF-8
-                        '''
+                        """
                     }
                 }
             }
@@ -67,7 +66,8 @@ pipeline {
                         echo "Node.js dependencies detected"
                         npm audit || true
                     fi
-                    
+                '''
+                sh '''
                     echo "Scanning for hardcoded secrets..."
                     grep -r "password|api_key|secret|token" . \
                         --include="*.js" \
