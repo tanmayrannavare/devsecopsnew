@@ -1,4 +1,4 @@
-// FINAL, CORRECTED JENKINSFILE (with NodeJS Tool)
+// FINAL, CORRECTED JENKINSFILE (with NodeJS Tool for SonarQube)
 // Project: Embedding Security in Every Stage of the CI/CD Lifecycle
 // Type: HTML/CSS/JavaScript Web Application
 // Repository: github.com/tanmayrannavare/devsecopsnew (PUBLIC)
@@ -7,7 +7,7 @@ pipeline {
     agent any
 
     tools {
-        // This makes Node.js available for the SonarQube scanner
+        // This makes Node.js available for the SonarQube scanner to analyze JavaScript
         // The name 'NodeJS-18' MUST match the name you configure in Global Tool Configuration
         nodejs 'NodeJS-18' 
     }
