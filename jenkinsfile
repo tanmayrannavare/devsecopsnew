@@ -1,26 +1,28 @@
-// FINAL, CORRECTED, AND OPTIMIZED JENKINSFILE
+// FINAL, CORRECTED JENKINSFILE (with NodeJS Tool)
 // Project: Embedding Security in Every Stage of the CI/CD Lifecycle
 // Type: HTML/CSS/JavaScript Web Application
 // Repository: github.com/tanmayrannavare/devsecopsnew (PUBLIC)
 
 pipeline {
     agent any
+
+    tools {
+        // This makes Node.js available for the SonarQube scanner
+        // The name 'NodeJS-18' MUST match the name you configure in Global Tool Configuration
+        nodejs 'NodeJS-18' 
+    }
     
     environment {
         DOCKER_IMAGE = "tanmayrannavare/devsecops"
         DOCKER_TAG = "${BUILD_NUMBER}"
-        SONARQUBE_SERVER = "SonarQube" // Must match the name in Jenkins Global Config
+        SONARQUBE_SERVER = "SonarQube" // This MUST match the name in Configure System
     }
-    
-    // No top-level 'tools' block needed for this setup.
-    // The SonarQube Scanner tool is called directly within the stage.
     
     stages {
         
         stage('1. Git Checkout') {
             steps {
                 echo '========== Cloning Git Repository =========='
-                // PUBLIC REPO - NO credentials needed
                 git branch: 'main',
                     url: 'https://github.com/tanmayrannavare/devsecopsnew.git'
             }
@@ -30,10 +32,9 @@ pipeline {
             steps {
                 echo '========== Running SonarQube Code Analysis =========='
                 script {
-                    // Define the SonarScanner tool and get its path
-                    def scannerHome = tool 'SonarScanner' // Must match the name in Global Tool Config
+                    // This tool name MUST match the one in Global Tool Configuration
+                    def scannerHome = tool 'SonarScanner' 
                     
-                    // Now run the scanner using the correct path
                     withSonarQubeEnv("${SONARQUBE_SERVER}") {
                         sh """
                             ${scannerHome}/bin/sonar-scanner \
@@ -60,7 +61,6 @@ pipeline {
         stage('4. Security Scan - Dependencies') {
             steps {
                 echo '========== Scanning for Vulnerabilities =========='
-                // Scan for hardcoded secrets and vulnerable dependencies
                 sh '''
                     if [ -f "package.json" ]; then
                         echo "Node.js dependencies detected"
@@ -206,24 +206,11 @@ pipeline {
         success {
             echo '''
             ✅ ✅ ✅ PIPELINE SUCCEEDED! ✅ ✅ ✅
-            
-            Summary:
-            ✓ Code analyzed with SonarQube
-            ✓ Security vulnerabilities scanned
-            ✓ Docker image built and scanned
-            ✓ Dynamic security testing complete
-            ✓ Ready for production deployment
             '''
         }
         failure {
             echo '''
             ❌ ❌ ❌ PIPELINE FAILED ❌ ❌ ❌
-            
-            Please check:
-            1. Console output for error details
-            2. SonarQube quality gate results
-            3. Trivy vulnerability scan results
-            4. OWASP ZAP security findings
             '''
         }
     }
