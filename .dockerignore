@@ -1,0 +1,15 @@
+# Ignore version control files
+.git
+.github
+
+# Ignore pipeline and local configuration
+Dockerfile
+.dockerignore
+Jenkinsfile
+nginx.conf
+
+# Ignore documentation
+*.md
+
+# Ignore node modules if you have them
+node_modules
