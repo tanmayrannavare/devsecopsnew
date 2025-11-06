@@ -1,25 +1,43 @@
-user root; # Run as root to bind port 80
-worker_processes auto;
-daemon off;
-pid /tmp/nginx.pid;
+# Git and CI/CD
+.git
+.gitignore
+jenkinsfile
 
-events {
-    worker_connections 1024;
-}
+# Node / build dependencies
+node_modules
+npm-debug.log
+package*.json
+yarn.lock
 
-http {
-    access_log /dev/stdout;
-    error_log /dev/stderr;
+# Docker-specific files
+Dockerfile
+.dockerignore
 
-    server {
-        listen 80;
-        server_name _;
+# Local environment / credentials
+.env
+*.key
+*.pem
+*.crt
+*.env
 
-        root /usr/share/nginx/html;
-        index index.html;
+# Temporary / build directories
+dist
+build
+tmp
+logs
+coverage
 
-        location / {
-            try_files $uri $uri/ =404;
-        }
-    }
-}
+# OS or editor files
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+*.swp
+
+# Documentation
+README.md
+LICENSE
+
+# ✅ Include only your static app files:
+# index.html, styles.css, script.js, nginx.conf, images/, live/
+
