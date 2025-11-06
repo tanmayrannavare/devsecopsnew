@@ -67,7 +67,7 @@ pipeline {
             steps {
                 echo '🐳 Building Docker image...'
                 script {
-                    dockerImage = docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
+                    def dockerImage = docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
                     docker.build("${DOCKER_IMAGE}:latest")
                 }
             }
@@ -95,12 +95,13 @@ pipeline {
                 script {
                     try {
                         docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-credentials') {
+                            def dockerImage = docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}")
                             dockerImage.push("${DOCKER_TAG}")
                             dockerImage.push("latest")
                         }
                         echo "✅ Docker image pushed successfully"
                     } catch (Exception e) {
-                        echo "⚠️ Push skipped. Image is available locally: ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                        echo "⚠️ Push skipped. Image available locally: ${DOCKER_IMAGE}:${DOCKER_TAG}"
                     }
                 }
             }
@@ -117,10 +118,10 @@ pipeline {
                     docker stop live-app || true
                     docker rm live-app || true
                     docker run -d --name live-app -p 80:80 ${DOCKER_IMAGE}:${DOCKER_TAG}
-
                     sleep 5
-                    echo "🌍 Public IP: $(curl -s ifconfig.me)"
-                    echo "✅ App deployed successfully at: http://$(curl -s ifconfig.me)"
+                    PUBLIC_IP=$(curl -s ifconfig.me)
+                    echo "🌍 Public IP: $PUBLIC_IP"
+                    echo "✅ App deployed successfully at: http://$PUBLIC_IP"
                 '''
             }
         }
@@ -130,10 +131,17 @@ pipeline {
                 echo '🧠 Running OWASP ZAP scan...'
                 sh '''
                     sleep 5
+                    # Give write access so the ZAP container can write the report
+                    chmod -R 777 $(pwd)
+
                     docker pull ghcr.io/zaproxy/zaproxy:stable
-                    docker run --rm --network="host" -v $(pwd):/zap/wrk:rw \
+
+                    docker run --rm --network="host" \
+                        -v $(pwd):/zap/wrk:rw \
                         -t ghcr.io/zaproxy/zaproxy:stable \
                         zap-baseline.py -t http://localhost -r zap-report.html || echo "⚠️ ZAP scan completed with findings"
+
+                    echo "✅ ZAP scan finished and report generated."
                 '''
             }
             post {
@@ -167,4 +175,5 @@ pipeline {
         }
     }
 }
+
 
