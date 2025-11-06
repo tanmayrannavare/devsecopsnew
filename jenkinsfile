@@ -12,6 +12,7 @@ pipeline {
     }
 
     stages {
+
         stage('1. Git Checkout') {
             steps {
                 echo '📦 Cloning repository...'
@@ -31,7 +32,7 @@ pipeline {
                             -Dsonar.projectKey=devsecops-web \
                             -Dsonar.projectName="DevSecOps Web App" \
                             -Dsonar.sources=. \
-                            -Dsonar.exclusions=node_modules/**,build/**,dist/** \
+                            -Dsonar.exclusions=node_modules/**,build/**,dist/**,zap-report.html,trivy-report.json,.scannerwork/** \
                             -Dsonar.sourceEncoding=UTF-8
                         """
                     }
@@ -170,6 +171,3 @@ pipeline {
         }
     }
 }
-
-
-
