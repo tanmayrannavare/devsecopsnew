@@ -1,10 +1,8 @@
-// FINAL, FULL Jenkinsfile - DevSecOps Web Application
-
 pipeline {
     agent any
 
     tools {
-        nodejs 'NodeJS-18' // Node.js for SonarQube JS scanning
+        nodejs 'NodeJS-18' // NodeJS tool for SonarQube scanner
     }
 
     environment {
@@ -14,16 +12,18 @@ pipeline {
     }
 
     stages {
+
         stage('1. Git Checkout') {
             steps {
-                echo 'Cloning Git repository...'
-                git branch: 'main', url: 'https://github.com/tanmayrannavare/devsecopsnew.git'
+                echo 'Cloning repository...'
+                git branch: 'main',
+                    url: 'https://github.com/tanmayrannavare/devsecopsnew.git'
             }
         }
 
-        stage('2. Code Quality - SonarQube') {
+        stage('2. SonarQube Analysis') {
             steps {
-                echo 'Running SonarQube Analysis...'
+                echo 'Running SonarQube scan...'
                 script {
                     def scannerHome = tool 'SonarScanner'
                     withSonarQubeEnv("${SONARQUBE_SERVER}") {
@@ -49,15 +49,13 @@ pipeline {
             }
         }
 
-        stage('4. Security Scan - Dependencies') {
+        stage('4. Security Scan - Dependencies & Secrets') {
             steps {
-                echo 'Scanning Node.js dependencies for vulnerabilities...'
+                echo 'Scanning for Node.js vulnerabilities and secrets...'
                 sh '''
                     if [ -f "package.json" ]; then
                         npm audit || true
                     fi
-
-                    echo "Scanning for hardcoded secrets..."
                     grep -r "password|api_key|secret|token" . \
                         --include="*.js" --include="*.html" --include="*.css" || echo "✓ No obvious secrets found"
                 '''
@@ -70,20 +68,17 @@ pipeline {
                 script {
                     dockerImage = docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
                     docker.build("${DOCKER_IMAGE}:latest")
-                    echo "Docker image built: ${DOCKER_IMAGE}:${DOCKER_TAG}"
                 }
             }
         }
 
-        stage('6. Scan Docker Image - Trivy') {
+        stage('6. Scan Docker Image with Trivy') {
             steps {
-                echo 'Running Trivy Docker image scan...'
+                echo 'Scanning Docker image for vulnerabilities...'
                 sh '''
                     trivy image --format json --output trivy-report.json ${DOCKER_IMAGE}:${DOCKER_TAG}
                     trivy image --format table ${DOCKER_IMAGE}:${DOCKER_TAG}
-                    trivy image --exit-code 1 --severity CRITICAL,HIGH ${DOCKER_IMAGE}:${DOCKER_TAG} || {
-                        echo "⚠️ High severity vulnerabilities found"
-                    }
+                    trivy image --exit-code 1 --severity CRITICAL,HIGH ${DOCKER_IMAGE}:${DOCKER_TAG} || echo "⚠️ High vulnerabilities detected"
                 '''
             }
             post {
@@ -93,32 +88,42 @@ pipeline {
             }
         }
 
-        stage('7. Push to Docker Registry (Optional)') {
-            when { branch 'main' }
+        stage('7. Push Docker Image (Optional)') {
+            when {
+                branch 'main'
+            }
             steps {
-                echo 'Pushing Docker image to registry...'
+                echo 'Pushing Docker image to Docker Hub...'
                 script {
                     try {
                         docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-credentials') {
                             dockerImage.push("${DOCKER_TAG}")
                             dockerImage.push("latest")
                         }
+                        echo "Docker image pushed successfully"
                     } catch (Exception e) {
-                        echo "⚠️ Docker Hub push skipped. Image available locally: ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                        echo "⚠️ Push skipped. Image is available locally: ${DOCKER_IMAGE}:${DOCKER_TAG}"
                     }
                 }
             }
         }
 
-        stage('8. Deploy to Test Environment') {
+        stage('8. Deploy to Live') {
+            when {
+                branch 'main'
+            }
+            input {
+                message "All checks passed. Deploy to Live?"
+                ok "Deploy"
+            }
             steps {
-                echo 'Deploying to Test environment...'
+                echo 'Deploying to live environment...'
                 sh '''
-                    docker stop test-app || true
-                    docker rm test-app || true
-                    docker run -d --name test-app -p 80:80 ${DOCKER_IMAGE}:${DOCKER_TAG}
-                    sleep 10
-                    echo "✓ Test app deployed at: http://<SERVER-IP>:80"
+                    docker stop live-app || true
+                    docker rm live-app || true
+                    docker run -d --name live-app -p 80:80 ${DOCKER_IMAGE}:${DOCKER_TAG}
+                    sleep 5
+                    echo "✅ App deployed at http://$(hostname -I | awk '{print $1}')"
                 '''
             }
         }
@@ -130,8 +135,7 @@ pipeline {
                     sleep 5
                     docker run --rm --network="host" -v $(pwd):/zap/wrk:rw \
                         -t owasp/zap2docker-stable \
-                        zap-baseline.py \
-                        -t http://localhost:80 \
+                        zap-baseline.py -t http://localhost \
                         -r zap-report.html || echo "⚠️ ZAP scan completed with findings"
                 '''
             }
@@ -149,34 +153,22 @@ pipeline {
             }
         }
 
-        stage('10. Deploy to Live (Manual Approval)') {
-            when { branch 'main' }
-            input {
-                message "All security checks passed. Deploy to Live?"
-                ok "Deploy"
-            }
-            steps {
-                echo 'Deploying to Live environment...'
-                sh '''
-                    docker stop live-app || true
-                    docker rm live-app || true
-                    docker run -d --name live-app -p 80:80 ${DOCKER_IMAGE}:${DOCKER_TAG}
-                    sleep 10
-                    echo "✅ Live app deployed at: http://<SERVER-IP>:80"
-                '''
-            }
-        }
     }
 
     post {
         always {
-            echo 'Pipeline completed.'
+            echo 'Pipeline completed. Cleaning up temporary containers...'
             sh '''
-                docker stop test-app || true
-                docker rm test-app || true
+                docker stop live-app || true
+                docker rm live-app || true
             '''
         }
-        success { echo '✅ Pipeline succeeded!' }
-        failure { echo '❌ Pipeline failed!' }
+        success {
+            echo '✅ Pipeline succeeded!'
+        }
+        failure {
+            echo '❌ Pipeline failed!'
+        }
     }
 }
+
