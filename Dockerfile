@@ -17,7 +17,7 @@ COPY . /usr/share/nginx/html
 USER nginx
 
 # Expose the non-privileged port we defined in our custom nginx.conf
-EXPOSE 8080
+EXPOSE 80
 
 # Command to start Nginx using our custom configuration
 CMD ["nginx", "-c", "/etc/nginx/nginx.conf"]
