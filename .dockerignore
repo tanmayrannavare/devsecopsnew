@@ -1,51 +1,25 @@
-# ====================================================================
-# 🧱 Docker build context ignore file
-# Ensures only required app files (HTML, CSS, JS, images, config)
-# are copied into the container image.
-# ====================================================================
+user root; # Run as root to bind port 80
+worker_processes auto;
+daemon off;
+pid /tmp/nginx.pid;
 
-# --- Git & CI/CD ---
-.git
-.gitignore
-jenkinsfile
+events {
+    worker_connections 1024;
+}
 
-# --- Node / build dependencies (if any future use) ---
-node_modules
-npm-debug.log
-package*.json
-yarn.lock
+http {
+    access_log /dev/stdout;
+    error_log /dev/stderr;
 
-# --- Docker-specific files ---
-Dockerfile
-.dockerignore
+    server {
+        listen 80;
+        server_name _;
 
-# --- Local environment / credentials ---
-.env
-*.key
-*.pem
-*.crt
-*.env
+        root /usr/share/nginx/html;
+        index index.html;
 
-# --- Temporary / build output directories ---
-dist
-build
-tmp
-logs
-coverage
-
-# --- OS or editor files ---
-.DS_Store
-Thumbs.db
-.vscode
-.idea
-*.swp
-
-# --- Documentation ---
-README.md
-LICENSE
-
-# ====================================================================
-# ✅ What WILL be included:
-# index.html, styles.css, script.js, nginx.conf,
-# images/, live/, and other static assets needed for the web app.
-# ====================================================================
+        location / {
+            try_files $uri $uri/ =404;
+        }
+    }
+}
