@@ -136,7 +136,7 @@ pipeline {
                 sh '''
                     docker stop test-app || true
                     docker rm test-app || true
-                    docker run -d --name test-app -p 8080:8080 ${DOCKER_IMAGE}:${DOCKER_TAG}
+                    docker run -d --name test-app -p 80:8080 ${DOCKER_IMAGE}:${DOCKER_TAG}
                     sleep 10
                     echo "✓ Test app deployed at: http://localhost:8080"
                 '''
