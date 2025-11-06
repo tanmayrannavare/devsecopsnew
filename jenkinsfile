@@ -127,33 +127,34 @@ pipeline {
         }
 
         stage('9. Dynamic Security Test - OWASP ZAP') {
-    steps {
-        echo '🧠 Running OWASP ZAP scan...'
-        sh '''
-            sleep 5
-            docker pull ghcr.io/zaproxy/zaproxy:stable
+            steps {
+                echo '🧠 Running OWASP ZAP scan...'
+                sh '''
+                    sleep 5
+                    docker pull ghcr.io/zaproxy/zaproxy:stable
 
-            docker run --user root --rm --network="host" \
-                -v $(pwd):/zap/wrk:rw \
-                -t ghcr.io/zaproxy/zaproxy:stable \
-                zap-baseline.py -t http://localhost -r zap-report.html || echo "⚠️ ZAP scan completed with findings"
+                    docker run --user root --rm --network="host" \
+                        -v $(pwd):/zap/wrk:rw \
+                        -t ghcr.io/zaproxy/zaproxy:stable \
+                        zap-baseline.py -t http://localhost -r zap-report.html || echo "⚠️ ZAP scan completed with findings"
 
-            echo "✅ ZAP scan finished and report generated."
-        '''
-    }
-    post {
-        always {
-            publishHTML(target: [
-                allowMissing: true,
-                alwaysLinkToLastBuild: true,
-                keepAll: true,
-                reportDir: '.',
-                reportFiles: 'zap-report.html',
-                reportName: 'ZAP Security Report'
-            ])
+                    echo "✅ ZAP scan finished and report generated."
+                '''
+            }
+            post {
+                always {
+                    publishHTML(target: [
+                        allowMissing: true,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: '.',
+                        reportFiles: 'zap-report.html',
+                        reportName: 'ZAP Security Report'
+                    ])
+                }
+            }
         }
     }
-}
 
     post {
         always {
