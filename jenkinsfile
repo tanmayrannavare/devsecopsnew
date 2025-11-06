@@ -12,7 +12,6 @@ pipeline {
     }
 
     stages {
-
         stage('1. Git Checkout') {
             steps {
                 echo '📦 Cloning repository...'
@@ -131,16 +130,12 @@ pipeline {
                 echo '🧠 Running OWASP ZAP scan...'
                 sh '''
                     sleep 5
-                    # Give write access so the ZAP container can write the report
                     chmod -R 777 $(pwd)
-
                     docker pull ghcr.io/zaproxy/zaproxy:stable
-
                     docker run --rm --network="host" \
                         -v $(pwd):/zap/wrk:rw \
                         -t ghcr.io/zaproxy/zaproxy:stable \
                         zap-baseline.py -t http://localhost -r zap-report.html || echo "⚠️ ZAP scan completed with findings"
-
                     echo "✅ ZAP scan finished and report generated."
                 '''
             }
@@ -161,19 +156,20 @@ pipeline {
 
     post {
         always {
-            echo '🧹 Cleaning up temporary containers...'
+            echo '🧹 Cleaning up build environment (keeping live app)...'
+        }
+        success {
+            echo '✅ Pipeline succeeded! Live app remains running.'
+        }
+        failure {
+            echo '❌ Pipeline failed! Cleaning up live container...'
             sh '''
                 docker stop live-app || true
                 docker rm live-app || true
             '''
         }
-        success {
-            echo '✅ Pipeline succeeded!'
-        }
-        failure {
-            echo '❌ Pipeline failed!'
-        }
     }
 }
+
 
 
