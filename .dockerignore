@@ -1,15 +1,51 @@
-# Ignore version control files
-.git
-.github
+# ====================================================================
+# 🧱 Docker build context ignore file
+# Ensures only required app files (HTML, CSS, JS, images, config)
+# are copied into the container image.
+# ====================================================================
 
-# Ignore pipeline and local configuration
+# --- Git & CI/CD ---
+.git
+.gitignore
+jenkinsfile
+
+# --- Node / build dependencies (if any future use) ---
+node_modules
+npm-debug.log
+package*.json
+yarn.lock
+
+# --- Docker-specific files ---
 Dockerfile
 .dockerignore
-Jenkinsfile
-nginx.conf
 
-# Ignore documentation
-*.md
+# --- Local environment / credentials ---
+.env
+*.key
+*.pem
+*.crt
+*.env
 
-# Ignore node modules if you have them
-node_modules
+# --- Temporary / build output directories ---
+dist
+build
+tmp
+logs
+coverage
+
+# --- OS or editor files ---
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+*.swp
+
+# --- Documentation ---
+README.md
+LICENSE
+
+# ====================================================================
+# ✅ What WILL be included:
+# index.html, styles.css, script.js, nginx.conf,
+# images/, live/, and other static assets needed for the web app.
+# ====================================================================
