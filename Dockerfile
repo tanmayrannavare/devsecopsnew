@@ -7,7 +7,7 @@ RUN rm /etc/nginx/conf.d/default.conf
 # Copy custom Nginx config
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Copy static app files
+# Copy application files
 COPY . /usr/share/nginx/html
 
 # Expose port 80 for the web app
