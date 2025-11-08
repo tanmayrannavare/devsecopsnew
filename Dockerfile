@@ -1,6 +1,8 @@
 # Use official Nginx image
 FROM nginx:latest
 
+WORKDIR /app
+
 # Copy website content into Nginx's HTML folder
 COPY . /usr/share/nginx/html
 
