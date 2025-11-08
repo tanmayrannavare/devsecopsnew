@@ -1,13 +1,6 @@
 # Git and CI/CD
 .git
-.gitignore
 jenkinsfile
-
-# Node / build dependencies
-node_modules
-npm-debug.log
-package*.json
-yarn.lock
 
 # Docker-specific files
 Dockerfile
@@ -17,27 +10,9 @@ Dockerfile
 .env
 *.key
 *.pem
-*.crt
-*.env
-
-# Temporary / build directories
-dist
-build
-tmp
-logs
-coverage
-
-# OS or editor files
-.DS_Store
-Thumbs.db
-.vscode
-.idea
-*.swp
 
 # Documentation
 README.md
-LICENSE
 
 # ✅ Include only your static app files:
 # index.html, styles.css, script.js, nginx.conf, images/, live/
-
